@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book Appointment - MediCare Clinic</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <h1 id="pageTitle">Book an appointment</h1>
+        <p id="pageSub">Choose a doctor, a date and an available time slot.</p>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <section class="card hidden" id="successCard">
+      <div class="success-box">
+        <div class="tick">✓</div>
+        <h2 id="successTitle">Appointment confirmed</h2>
+        <p class="muted" id="successText"></p>
+        <div class="row" style="justify-content:center">
+          <a class="btn btn-primary" href="my-appointments.html">View my appointments</a>
+          <a class="btn btn-outline" href="doctors.html">Book another</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="two-col" id="bookingArea">
+      <section class="card">
+        <div id="errorBox" class="alert alert-error hidden"></div>
+        <div id="rescheduleInfo" class="alert alert-info hidden"></div>
+
+        <div class="form-group">
+          <label for="doctorSelect">1. Doctor</label>
+          <select id="doctorSelect"></select>
+        </div>
+
+        <div class="form-group">
+          <label>2. Date</label>
+          <div class="date-strip" id="dateStrip"></div>
+        </div>
+
+        <div class="form-group">
+          <label>3. Time slot</label>
+          <div id="slotArea"><p class="muted">Select a date to see the time slots.</p></div>
+          <div class="slot-legend">
+            <span><i style="background:#fff;border:1px solid var(--primary)"></i>Available</span>
+            <span><i style="background:var(--primary)"></i>Selected</span>
+            <span><i style="background:#e4eaee"></i>Booked</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0">
+          <label for="reason">4. Reason for visit <span class="muted" style="font-weight:400">(optional)</span></label>
+          <textarea id="reason" maxlength="200" placeholder="Briefly describe your symptoms or the reason for the visit"></textarea>
+        </div>
+      </section>
+
+      <aside class="card sticky summary">
+        <h3>Appointment summary</h3>
+        <dl>
+          <dt>Doctor</dt><dd id="sumDoctor">—</dd>
+          <dt>Specialty</dt><dd id="sumSpec">—</dd>
+          <dt>Date</dt><dd id="sumDate">Not selected</dd>
+          <dt>Time</dt><dd id="sumTime">Not selected</dd>
+          <dt>Fee</dt><dd id="sumFee">—</dd>
+        </dl>
+        <button class="btn btn-primary btn-block mt" id="confirmBtn" disabled>Confirm appointment</button>
+        <a class="btn btn-ghost btn-block mt" href="my-appointments.html">Cancel</a>
+      </aside>
+    </div>
+  </main>
+  <div class="footer">MediCare Clinic · Front-end demo for Information Systems Analysis and Design</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const session = requireRole("patient");
+    const state = { doctorId: null, date: null, time: null, editing: null };
+
+    if (session) { renderNav("doctors"); init(); }
+
+    function init() {
+      const sel = document.getElementById("doctorSelect");
+      sel.innerHTML = DB.doctors.map(function (d) {
+        return '<option value="' + d.id + '">' + esc(d.name) + " — " + esc(d.specialty) + "</option>";
+      }).join("");
+
+      const rid = Number(qs("reschedule"));
+      if (rid) {
+        const a = DB.appointments.find(function (x) { return x.id === rid && x.patientId === session.id; });
+        if (!a || statusOf(a) !== "Confirmed") {
+          toast("This appointment can't be rescheduled.", "error");
+          setTimeout(function () { location.href = "my-appointments.html"; }, 1200);
+          return;
+        }
+        state.editing = a;
+        state.doctorId = a.doctorId;
+        sel.disabled = true;
+        document.getElementById("pageTitle").textContent = "Reschedule appointment";
+        document.getElementById("pageSub").textContent = "Pick a new date and time. Your old slot will be released.";
+        document.getElementById("confirmBtn").textContent = "Confirm new time";
+        document.getElementById("reason").value = a.reason || "";
+        const info = document.getElementById("rescheduleInfo");
+        info.innerHTML = "Current appointment: <strong>" + fmtDate(a.date) + " at " + fmtTime(a.time) + "</strong>";
+        info.classList.remove("hidden");
+      } else {
+        state.doctorId = Number(qs("doctor")) || DB.doctors[0].id;
+        if (!getDoctor(state.doctorId)) state.doctorId = DB.doctors[0].id;
+      }
+      sel.value = state.doctorId;
+
+      sel.addEventListener("change", function () {
+        state.doctorId = Number(sel.value); state.date = null; state.time = null; hideError(); renderAll();
+      });
+      document.getElementById("confirmBtn").addEventListener("click", confirmBooking);
+      renderAll();
+    }
+
+    function showError(msg) { const e = document.getElementById("errorBox"); e.textContent = msg; e.classList.remove("hidden"); }
+    function hideError() { document.getElementById("errorBox").classList.add("hidden"); }
+
+    function renderAll() { renderDates(); renderSlots(); renderSummary(); }
+
+    function renderDates() {
+      const d = getDoctor(state.doctorId);
+      let html = "";
+      for (let i = 0; i < 14; i++) {
+        const iso = isoDate(i), dt = parseISO(iso);
+        const works = doctorWorksOn(d, iso);
+        html += '<button type="button" class="date-btn' + (state.date === iso ? " active" : "") + '" data-date="' + iso + '"' + (works ? "" : " disabled") + ' title="' + (works ? "" : "Doctor is off") + '">' +
+          '<span class="dow">' + DAY_NAMES[dt.getDay()] + '</span><span class="dom">' + dt.getDate() + '</span><span class="mon">' + MONTH_NAMES[dt.getMonth()] + "</span></button>";
+      }
+      const strip = document.getElementById("dateStrip");
+      strip.innerHTML = html;
+      strip.querySelectorAll("[data-date]").forEach(function (b) {
+        b.addEventListener("click", function () { state.date = b.dataset.date; state.time = null; hideError(); renderAll(); });
+      });
+    }
+
+    function renderSlots() {
+      const area = document.getElementById("slotArea");
+      if (!state.date) { area.innerHTML = '<p class="muted">Select a date to see the time slots.</p>'; return; }
+      const d = getDoctor(state.doctorId);
+      const ignore = state.editing ? state.editing.id : null;
+      const taken = bookedTimes(d.id, state.date, ignore);
+      area.innerHTML = '<div class="slots">' + doctorSlots(d).map(function (t) {
+        const past = isSlotPast(state.date, t), booked = taken.indexOf(t) !== -1;
+        const cls = "slot" + (past ? " past" : booked ? " booked" : "") + (state.time === t ? " selected" : "");
+        return '<button type="button" class="' + cls + '" data-time="' + t + '"' + (past ? " disabled" : "") + ">" + fmtTime(t) + "</button>";
+      }).join("") + "</div>";
+      area.querySelectorAll("[data-time]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          // Clicking a booked slot demonstrates the conflict check from the scenario
+          if (b.classList.contains("booked")) {
+            state.time = null; renderSlots(); renderSummary();
+            return showError("This slot is already booked. Please choose another time.");
+          }
+          hideError(); state.time = b.dataset.time; renderSlots(); renderSummary();
+        });
+      });
+    }
+
+    function renderSummary() {
+      const d = getDoctor(state.doctorId);
+      document.getElementById("sumDoctor").textContent = d.name;
+      document.getElementById("sumSpec").textContent = d.specialty;
+      document.getElementById("sumFee").textContent = d.fee + " EGP";
+      document.getElementById("sumDate").textContent = state.date ? fmtDate(state.date) : "Not selected";
+      document.getElementById("sumTime").textContent = state.time ? fmtTime(state.time) : "Not selected";
+      document.getElementById("confirmBtn").disabled = !(state.date && state.time);
+    }
+
+    function confirmBooking() {
+      hideError();
+      const reason = document.getElementById("reason").value.trim();
+      const ignoreId = state.editing ? state.editing.id : null;
+      // The system checks for scheduling conflicts before saving the booking
+      const r = checkBooking({ patientId: session.id, doctorId: state.doctorId, date: state.date, time: state.time, ignoreId: ignoreId });
+      if (!r.ok) { showError(r.error); state.time = null; renderSlots(); renderSummary(); return; }
+
+      if (state.editing) rescheduleAppointment(state.editing.id, state.date, state.time, reason);
+      else createAppointment({ patientId: session.id, doctorId: state.doctorId, date: state.date, time: state.time, reason: reason });
+
+      const d = getDoctor(state.doctorId);
+      document.getElementById("successTitle").textContent = state.editing ? "Appointment rescheduled" : "Appointment confirmed";
+      document.getElementById("successText").textContent = "You are booked with " + d.name + " on " + fmtDate(state.date) + " at " + fmtTime(state.time) + ".";
+      document.getElementById("bookingArea").classList.add("hidden");
+      document.getElementById("successCard").classList.remove("hidden");
+      window.scrollTo(0, 0);
+    }
+  </script>
+</body>
+</html>

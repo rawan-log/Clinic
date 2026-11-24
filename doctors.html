@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Doctors - MediCare Clinic</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <h1>Our doctors</h1>
+        <p>Browse by specialty and choose the doctor that fits you.</p>
+      </div>
+    </div>
+
+    <div class="card mb">
+      <div class="form-row">
+        <div class="form-group" style="margin:0">
+          <label for="search">Search by doctor name</label>
+          <input type="text" id="search" placeholder="e.g. Ahmed">
+        </div>
+        <div class="form-group" style="margin:0">
+          <label for="specialty">Specialty</label>
+          <select id="specialty"><option value="">All specialties</option></select>
+        </div>
+      </div>
+    </div>
+
+    <p class="muted small" id="count"></p>
+    <div class="grid grid-3" id="doctorGrid"></div>
+  </main>
+  <div class="footer">MediCare Clinic · Front-end demo for Information Systems Analysis and Design</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const session = requireRole("patient");
+    if (session) {
+      renderNav("doctors");
+      const sel = document.getElementById("specialty");
+      SPECIALTIES.forEach(function (s) {
+        const o = document.createElement("option");
+        o.value = s.name; o.textContent = s.icon + " " + s.name;
+        sel.appendChild(o);
+      });
+      const pre = qs("specialty");
+      if (pre) sel.value = pre;
+      document.getElementById("search").addEventListener("input", render);
+      sel.addEventListener("change", render);
+      render();
+    }
+
+    function render() {
+      const text = document.getElementById("search").value.trim().toLowerCase();
+      const spec = document.getElementById("specialty").value;
+      const list = DB.doctors.filter(function (d) {
+        return (!spec || d.specialty === spec) && (!text || d.name.toLowerCase().indexOf(text) !== -1);
+      });
+      document.getElementById("count").textContent = list.length + (list.length === 1 ? " doctor found" : " doctors found");
+      const grid = document.getElementById("doctorGrid");
+      if (!list.length) {
+        grid.innerHTML = '<div class="card empty" style="grid-column:1/-1"><span class="big">🔍</span>No doctors match your search.</div>';
+        return;
+      }
+      grid.innerHTML = list.map(function (d) {
+        const n = nextAvailable(d);
+        return '<article class="card doctor-card"><div class="top">' + avatarHTML(d) +
+          '<div><h3>' + esc(d.name) + '</h3><span class="spec">' + esc(d.specialty) + "</span></div></div>" +
+          '<div class="meta"><span>' + d.experience + " yrs experience</span><span>" + d.fee + " EGP</span></div>" +
+          '<div class="small">' + (n ? "Next available: <strong>" + fmtDate(n.date) + ", " + fmtTime(n.time) + "</strong>" : '<span class="muted">No free slots soon</span>') + "</div>" +
+          '<div class="btns"><a class="btn btn-outline btn-sm" href="doctor-profile.html?id=' + d.id + '">Profile</a>' +
+          '<a class="btn btn-primary btn-sm" href="booking.html?doctor=' + d.id + '">Book</a></div></article>';
+      }).join("");
+    }
+  </script>
+</body>
+</html>

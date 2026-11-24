@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - MediCare Clinic</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-wrap">
+    <section class="auth-hero">
+      <a class="brand" href="index.html"><span class="brand-logo">✚</span> MediCare Clinic</a>
+      <h1>Book your doctor appointment in a few clicks.</h1>
+      <p>Browse our doctors by specialty, pick a free time slot, and manage your appointments from one place.</p>
+      <ul>
+        <li>Choose from doctors in 6 specialties</li>
+        <li>See live available time slots</li>
+        <li>Cancel or reschedule anytime</li>
+      </ul>
+    </section>
+
+    <section class="auth-panel">
+      <div class="card auth-card">
+        <div class="segmented" id="modeTabs">
+          <button type="button" class="active" data-mode="login">Login</button>
+          <button type="button" data-mode="register">Patient Registration</button>
+        </div>
+
+        <div id="formError" class="alert alert-error hidden"></div>
+
+        <!-- Login form -->
+        <form id="loginForm" novalidate>
+          <h2>Welcome back</h2>
+          <p class="muted">Sign in to continue.</p>
+
+          <div class="form-group">
+            <label for="role">Login as</label>
+            <select id="role">
+              <option value="patient">Patient</option>
+              <option value="doctor">Doctor</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Login</button>
+
+          <div class="demo-box">
+            <strong>Demo accounts</strong> (click to fill):<br>
+            <button type="button" data-demo="patient|patient@clinic.com|patient123">Patient</button> ·
+            <button type="button" data-demo="doctor|habiba@clinic.com|doctor123">Doctor</button> ·
+            <button type="button" data-demo="admin|admin@clinic.com|admin123">Admin</button>
+          </div>
+        </form>
+
+        <!-- Registration form -->
+        <form id="registerForm" class="hidden" novalidate>
+          <h2>Create a patient account</h2>
+          <p class="muted">Register to start booking appointments.</p>
+
+          <div class="form-group">
+            <label for="regName">Full name</label>
+            <input type="text" id="regName" placeholder="e.g. Mohamed Adel">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="regEmail">Email</label>
+              <input type="email" id="regEmail" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+              <label for="regPhone">Phone</label>
+              <input type="tel" id="regPhone" placeholder="01XXXXXXXXX">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="regPassword">Password</label>
+              <input type="password" id="regPassword" placeholder="At least 6 characters">
+            </div>
+            <div class="form-group">
+              <label for="regConfirm">Confirm password</label>
+              <input type="password" id="regConfirm" placeholder="Repeat password">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Create account</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Already logged in? Go straight to the right dashboard.
+    (function () {
+      const s = getSession();
+      if (s && homeFor(s.role)) location.replace(homeFor(s.role));
+    })();
+
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const errBox = document.getElementById("formError");
+
+    function showError(msg) { errBox.textContent = msg; errBox.classList.remove("hidden"); }
+    function clearError() { errBox.classList.add("hidden"); }
+
+    document.getElementById("modeTabs").addEventListener("click", function (e) {
+      const b = e.target.closest("button[data-mode]");
+      if (!b) return;
+      clearError();
+      this.querySelectorAll("button").forEach(function (x) { x.classList.toggle("active", x === b); });
+      loginForm.classList.toggle("hidden", b.dataset.mode !== "login");
+      registerForm.classList.toggle("hidden", b.dataset.mode !== "register");
+    });
+
+    document.querySelectorAll("[data-demo]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const p = btn.dataset.demo.split("|");
+        document.getElementById("role").value = p[0];
+        document.getElementById("loginEmail").value = p[1];
+        document.getElementById("loginPassword").value = p[2];
+        clearError();
+      });
+    });
+
+    loginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      clearError();
+      const role = document.getElementById("role").value;
+      const email = document.getElementById("loginEmail").value;
+      const pass = document.getElementById("loginPassword").value;
+      if (!email.trim() || !pass) return showError("Please enter your email and password.");
+      const r = login(role, email, pass);
+      if (!r.ok) return showError(r.error);
+      location.href = homeFor(role);
+    });
+
+    registerForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      clearError();
+      const name = document.getElementById("regName").value;
+      const email = document.getElementById("regEmail").value;
+      const phone = document.getElementById("regPhone").value;
+      const pass = document.getElementById("regPassword").value;
+      const confirm = document.getElementById("regConfirm").value;
+      if (!name.trim() || !email.trim() || !phone.trim() || !pass) return showError("Please fill in all the fields.");
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) return showError("Please enter a valid email address.");
+      if (!/^[0-9+\s-]{7,15}$/.test(phone.trim())) return showError("Please enter a valid phone number.");
+      if (pass.length < 6) return showError("Password must be at least 6 characters.");
+      if (pass !== confirm) return showError("Passwords do not match.");
+      const r = registerPatient({ name: name, email: email, phone: phone, password: pass });
+      if (!r.ok) return showError(r.error);
+      location.href = homeFor("patient");
+    });
+  </script>
+</body>
+</html>

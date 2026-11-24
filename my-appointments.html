@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Appointments - MediCare Clinic</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <h1>My appointments</h1>
+        <p>View, reschedule or cancel your bookings.</p>
+      </div>
+      <a class="btn btn-primary" href="doctors.html">+ Book new appointment</a>
+    </div>
+
+    <div class="card">
+      <div class="tabs" id="filters">
+        <button class="active" data-f="all">All</button>
+        <button data-f="Confirmed">Upcoming</button>
+        <button data-f="Completed">Past</button>
+        <button data-f="Cancelled">Cancelled</button>
+      </div>
+      <div id="tableArea"></div>
+    </div>
+  </main>
+  <div class="footer">MediCare Clinic · Front-end demo for Information Systems Analysis and Design</div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const session = requireRole("patient");
+    let filter = "all";
+
+    if (session) {
+      renderNav("appointments");
+      document.getElementById("filters").addEventListener("click", function (e) {
+        const b = e.target.closest("button[data-f]");
+        if (!b) return;
+        filter = b.dataset.f;
+        this.querySelectorAll("button").forEach(function (x) { x.classList.toggle("active", x === b); });
+        render();
+      });
+      wireCancel(document.getElementById("tableArea"), render);
+      render();
+    }
+
+    function render() {
+      const mine = DB.appointments.filter(function (a) { return a.patientId === session.id; });
+      const list = mine.filter(function (a) { return filter === "all" || statusOf(a) === filter; })
+        .sort(function (a, b) { return filter === "Completed" || filter === "Cancelled" ? byDateTime(b, a) : byDateTime(a, b); });
+      const area = document.getElementById("tableArea");
+      if (!list.length) {
+        area.innerHTML = '<div class="empty"><span class="big">📭</span>No appointments to show here.</div>';
+        return;
+      }
+      area.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Doctor</th><th>Date</th><th>Time</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody>' +
+        list.map(function (a) {
+          const d = getDoctor(a.doctorId);
+          return "<tr><td><strong>" + esc(d ? d.name : "Removed doctor") + '</strong><br><span class="muted small">' + esc(d ? d.specialty : "") + "</span></td>" +
+            "<td>" + fmtDate(a.date) + "</td><td>" + fmtTime(a.time) + "</td>" +
+            "<td>" + (a.reason ? esc(a.reason) : '<span class="muted">—</span>') + "</td>" +
+            "<td>" + statusBadge(statusOf(a)) + '</td><td class="actions">' + apptActionsHTML(a) + "</td></tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+  </script>
+</body>
+</html>
