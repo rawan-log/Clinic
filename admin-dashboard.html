@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard - MediCare Clinic</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="nav"></div>
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <h1>Admin dashboard</h1>
+        <p>Manage doctors, patients and appointment records.</p>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs">
+      <button class="active" data-tab="overview">Overview</button>
+      <button data-tab="doctors">Doctors</button>
+      <button data-tab="patients">Patients</button>
+      <button data-tab="appointments">Appointments</button>
+    </div>
+
+    <!-- Overview -->
+    <section id="tab-overview">
+      <div class="grid grid-4 mb" id="stats"></div>
+      <div class="card">
+        <div class="card-title"><h2>Latest appointments</h2></div>
+        <div id="latest"></div>
+      </div>
+    </section>
+
+    <!-- Doctors -->
+    <section id="tab-doctors" class="hidden">
+      <div class="card">
+        <div class="card-title"><h2>Doctors</h2><button class="btn btn-primary btn-sm" id="addDoctor">+ Add doctor</button></div>
+        <div id="doctorsTable"></div>
+      </div>
+    </section>
+
+    <!-- Patients -->
+    <section id="tab-patients" class="hidden">
+      <div class="card">
+        <div class="card-title"><h2>Patients</h2></div>
+        <div id="patientsTable"></div>
+      </div>
+    </section>
+
+    <!-- Appointments -->
+    <section id="tab-appointments" class="hidden">
+      <div class="card">
+        <div class="card-title"><h2>Appointment records</h2></div>
+        <div class="form-row mb">
+          <div style="margin:0"><label for="fStatus">Status</label>
+            <select id="fStatus"><option value="">All</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option></select></div>
+          <div style="margin:0"><label for="fDoctor">Doctor</label>
+            <select id="fDoctor"><option value="">All doctors</option></select></div>
+        </div>
+        <div id="apptTable"></div>
+      </div>
+    </section>
+  </main>
+  <div class="footer">MediCare Clinic · Front-end demo for Information Systems Analysis and Design</div>
+
+  <!-- Doctor form modal -->
+  <div class="modal-overlay hidden" id="doctorModal">
+    <form class="modal modal-wide" id="doctorForm" novalidate>
+      <h3 id="doctorModalTitle">Add doctor</h3>
+      <div id="doctorFormError" class="alert alert-error hidden"></div>
+      <div class="form-row">
+        <div class="form-group"><label for="dName">Full name</label><input type="text" id="dName" placeholder="Dr. First Last"></div>
+        <div class="form-group"><label for="dSpec">Specialty</label><select id="dSpec"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label for="dEmail">Email</label><input type="email" id="dEmail"></div>
+        <div class="form-group"><label for="dPass">Password</label><input type="text" id="dPass" placeholder="Min 6 characters"><div class="hint" id="dPassHint"></div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label for="dExp">Experience (years)</label><input type="number" id="dExp" min="0" max="60"></div>
+        <div class="form-group"><label for="dFee">Consultation fee (EGP)</label><input type="number" id="dFee" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label for="dFrom">Working from</label><select id="dFrom"></select></div>
+        <div class="form-group"><label for="dTo">Working until</label><select id="dTo"></select></div>
+      </div>
+      <div class="form-group"><label>Working days</label><div class="check-group" id="dDays"></div></div>
+      <div class="form-group"><label for="dBio">Short bio</label><textarea id="dBio" maxlength="220"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" id="doctorCancel">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save doctor</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    const session = requireRole("admin");
+    let editingId = null;
+
+    if (session) { init(); }
+
+    function init() {
+      renderNav("dashboard");
+
+      document.getElementById("tabs").addEventListener("click", function (e) {
+        const b = e.target.closest("button[data-tab]");
+        if (!b) return;
+        this.querySelectorAll("button").forEach(function (x) { x.classList.toggle("active", x === b); });
+        ["overview", "doctors", "patients", "appointments"].forEach(function (t) {
+          document.getElementById("tab-" + t).classList.toggle("hidden", t !== b.dataset.tab);
+        });
+      });
+
+      // Static form options
+      document.getElementById("dSpec").innerHTML = SPECIALTIES.map(function (s) { return "<option>" + s.name + "</option>"; }).join("");
+      let hours = "";
+      for (let h = 7; h <= 22; h++) { const v = String(h).padStart(2, "0") + ":00"; hours += '<option value="' + v + '">' + fmtTime(v) + "</option>"; }
+      document.getElementById("dFrom").innerHTML = hours;
+      document.getElementById("dTo").innerHTML = hours;
+      document.getElementById("dDays").innerHTML = DAY_NAMES.map(function (n, i) {
+        return '<label><input type="checkbox" value="' + i + '"> ' + n + "</label>";
+      }).join("");
+
+      document.getElementById("fDoctor").innerHTML += DB.doctors.map(function (d) { return '<option value="' + d.id + '">' + esc(d.name) + "</option>"; }).join("");
+      document.getElementById("fStatus").addEventListener("change", renderAppointments);
+      document.getElementById("fDoctor").addEventListener("change", renderAppointments);
+
+      document.getElementById("addDoctor").addEventListener("click", function () { openDoctorForm(null); });
+      document.getElementById("doctorCancel").addEventListener("click", closeDoctorForm);
+      document.getElementById("doctorForm").addEventListener("submit", saveDoctor);
+
+      document.getElementById("doctorsTable").addEventListener("click", onDoctorAction);
+      document.getElementById("patientsTable").addEventListener("click", onPatientAction);
+      document.getElementById("apptTable").addEventListener("click", onApptAction);
+
+      renderAll();
+    }
+
+    function renderAll() { renderOverview(); renderDoctors(); renderPatients(); renderAppointments(); }
+
+    /* ---------- Overview ---------- */
+    function renderOverview() {
+      const upcoming = DB.appointments.filter(function (a) { return statusOf(a) === "Confirmed"; }).length;
+      const cancelled = DB.appointments.filter(function (a) { return a.status === "Cancelled"; }).length;
+      const stats = [["Doctors", DB.doctors.length], ["Patients", DB.patients.length], ["Upcoming appointments", upcoming], ["Cancelled appointments", cancelled]];
+      document.getElementById("stats").innerHTML = stats.map(function (s) {
+        return '<div class="card stat"><span class="num">' + s[1] + '</span><span class="label">' + s[0] + "</span></div>";
+      }).join("");
+
+      const latest = DB.appointments.slice().sort(function (a, b) { return b.id - a.id; }).slice(0, 5);
+      document.getElementById("latest").innerHTML = apptTableHTML(latest, false);
+    }
+
+    function apptTableHTML(list, withActions) {
+      if (!list.length) return '<div class="empty"><span class="big">📭</span>No appointments found.</div>';
+      return '<div class="table-wrap"><table><thead><tr><th>#</th><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th>' + (withActions ? "<th>Actions</th>" : "") + "</tr></thead><tbody>" +
+        list.map(function (a) {
+          const p = getPatient(a.patientId), d = getDoctor(a.doctorId);
+          return "<tr><td>" + a.id + "</td><td>" + esc(p ? p.name : "Removed") + "</td><td>" + esc(d ? d.name : "Removed") + "</td><td>" + fmtDate(a.date) + "</td><td>" + fmtTime(a.time) + "</td><td>" + statusBadge(statusOf(a)) + "</td>" +
+            (withActions ? '<td class="actions">' + (statusOf(a) === "Confirmed" ? '<button class="btn btn-sm btn-outline" data-act="cancel" data-id="' + a.id + '">Cancel</button>' : "") +
+              '<button class="btn btn-sm btn-danger-outline" data-act="delete" data-id="' + a.id + '">Delete</button></td>' : "") + "</tr>";
+        }).join("") + "</tbody></table></div>";
+    }
+
+    /* ---------- Doctors ---------- */
+    function renderDoctors() {
+      document.getElementById("doctorsTable").innerHTML = '<div class="table-wrap"><table><thead><tr><th>Doctor</th><th>Specialty</th><th>Days</th><th>Hours</th><th>Fee</th><th>Actions</th></tr></thead><tbody>' +
+        DB.doctors.map(function (d) {
+          return "<tr><td><strong>" + esc(d.name) + '</strong><br><span class="muted small">' + esc(d.email) + "</span></td><td>" + esc(d.specialty) + "</td><td>" + daysLabel(d) + "</td><td>" +
+            fmtTime(d.from) + " – " + fmtTime(d.to) + "</td><td>" + d.fee + ' EGP</td><td class="actions"><button class="btn btn-sm btn-outline" data-act="edit" data-id="' + d.id +
+            '">Edit</button><button class="btn btn-sm btn-danger-outline" data-act="delete" data-id="' + d.id + '">Delete</button></td></tr>';
+        }).join("") + "</tbody></table></div>";
+    }
+
+    function openDoctorForm(id) {
+      editingId = id;
+      const d = id ? getDoctor(id) : null;
+      document.getElementById("doctorModalTitle").textContent = d ? "Edit doctor" : "Add doctor";
+      document.getElementById("doctorFormError").classList.add("hidden");
+      document.getElementById("dName").value = d ? d.name : "";
+      document.getElementById("dSpec").value = d ? d.specialty : SPECIALTIES[0].name;
+      document.getElementById("dEmail").value = d ? d.email : "";
+      document.getElementById("dPass").value = "";
+      document.getElementById("dPassHint").textContent = d ? "Leave empty to keep the current password." : "";
+      document.getElementById("dExp").value = d ? d.experience : 5;
+      document.getElementById("dFee").value = d ? d.fee : 300;
+      document.getElementById("dFrom").value = d ? d.from : "09:00";
+      document.getElementById("dTo").value = d ? d.to : "15:00";
+      document.getElementById("dBio").value = d ? d.bio : "";
+      const days = d ? d.days : [0, 1, 2, 3, 4];
+      document.querySelectorAll("#dDays input").forEach(function (c) { c.checked = days.indexOf(Number(c.value)) !== -1; });
+      document.getElementById("doctorModal").classList.remove("hidden");
+    }
+    function closeDoctorForm() { document.getElementById("doctorModal").classList.add("hidden"); }
+
+    function saveDoctor(e) {
+      e.preventDefault();
+      const err = document.getElementById("doctorFormError");
+      function fail(m) { err.textContent = m; err.classList.remove("hidden"); }
+      const name = document.getElementById("dName").value.trim();
+      const email = document.getElementById("dEmail").value.trim().toLowerCase();
+      const pass = document.getElementById("dPass").value;
+      const from = document.getElementById("dFrom").value, to = document.getElementById("dTo").value;
+      const days = Array.prototype.map.call(document.querySelectorAll("#dDays input:checked"), function (c) { return Number(c.value); });
+
+      if (!name) return fail("Please enter the doctor's name.");
+      if (!/^\S+@\S+\.\S+$/.test(email)) return fail("Please enter a valid email address.");
+      const dup = DB.doctors.concat(DB.patients).some(function (x) { return x.email.toLowerCase() === email && !(editingId && x === getDoctor(editingId)); });
+      if (dup || email === DB.admin.email) return fail("This email is already used by another account.");
+      if (!editingId && pass.length < 6) return fail("Password must be at least 6 characters.");
+      if (editingId && pass && pass.length < 6) return fail("Password must be at least 6 characters.");
+      if (from >= to) return fail("Working hours are invalid: 'until' must be after 'from'.");
+      if (!days.length) return fail("Select at least one working day.");
+
+      const data = {
+        name: name, specialty: document.getElementById("dSpec").value, email: email,
+        experience: Number(document.getElementById("dExp").value) || 0, fee: Number(document.getElementById("dFee").value) || 0,
+        from: from, to: to, days: days, bio: document.getElementById("dBio").value.trim()
+      };
+      if (editingId) {
+        const d = getDoctor(editingId);
+        Object.assign(d, data);
+        if (pass) d.password = pass;
+        toast("Doctor updated.", "success");
+      } else {
+        data.id = nextId(DB.doctors); data.password = pass;
+        DB.doctors.push(data);
+        document.getElementById("fDoctor").innerHTML += '<option value="' + data.id + '">' + esc(data.name) + "</option>";
+        toast("Doctor added.", "success");
+      }
+      persist(); closeDoctorForm(); renderAll();
+    }
+
+    async function onDoctorAction(e) {
+      const b = e.target.closest("[data-act]"); if (!b) return;
+      const id = Number(b.dataset.id);
+      if (b.dataset.act === "edit") return openDoctorForm(id);
+      const d = getDoctor(id);
+      const ok = await confirmDialog({ title: "Delete " + d.name + "?", message: "The doctor will be removed and all of their upcoming appointments will be cancelled.", confirmText: "Delete doctor", danger: true });
+      if (!ok) return;
+      DB.appointments.forEach(function (a) { if (a.doctorId === id && statusOf(a) === "Confirmed") a.status = "Cancelled"; });
+      DB.doctors = DB.doctors.filter(function (x) { return x.id !== id; });
+      persist();
+      const f = document.getElementById("fDoctor");
+      f.innerHTML = '<option value="">All doctors</option>' + DB.doctors.map(function (x) { return '<option value="' + x.id + '">' + esc(x.name) + "</option>"; }).join("");
+      toast("Doctor deleted.", "success"); renderAll();
+    }
+
+    /* ---------- Patients ---------- */
+    function renderPatients() {
+      const el = document.getElementById("patientsTable");
+      if (!DB.patients.length) { el.innerHTML = '<div class="empty"><span class="big">🧑‍🤝‍🧑</span>No patients registered yet.</div>'; return; }
+      el.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Patient</th><th>Email</th><th>Phone</th><th>Appointments</th><th>Actions</th></tr></thead><tbody>' +
+        DB.patients.map(function (p) {
+          const n = DB.appointments.filter(function (a) { return a.patientId === p.id; }).length;
+          return "<tr><td><strong>" + esc(p.name) + "</strong></td><td>" + esc(p.email) + "</td><td>" + esc(p.phone) + "</td><td>" + n +
+            '</td><td class="actions"><button class="btn btn-sm btn-danger-outline" data-act="delete" data-id="' + p.id + '">Delete</button></td></tr>';
+        }).join("") + "</tbody></table></div>";
+    }
+    async function onPatientAction(e) {
+      const b = e.target.closest("[data-act]"); if (!b) return;
+      const id = Number(b.dataset.id), p = getPatient(id);
+      const ok = await confirmDialog({ title: "Delete " + p.name + "?", message: "The patient account and all of their appointments will be permanently removed.", confirmText: "Delete patient", danger: true });
+      if (!ok) return;
+      DB.appointments = DB.appointments.filter(function (a) { return a.patientId !== id; });
+      DB.patients = DB.patients.filter(function (x) { return x.id !== id; });
+      persist(); toast("Patient deleted.", "success"); renderAll();
+    }
+
+    /* ---------- Appointments ---------- */
+    function renderAppointments() {
+      const st = document.getElementById("fStatus").value, doc = document.getElementById("fDoctor").value;
+      const list = DB.appointments.filter(function (a) {
+        return (!st || statusOf(a) === st) && (!doc || a.doctorId === Number(doc));
+      }).sort(function (a, b) { return byDateTime(b, a); });
+      document.getElementById("apptTable").innerHTML = apptTableHTML(list, true);
+    }
+    async function onApptAction(e) {
+      const b = e.target.closest("[data-act]"); if (!b) return;
+      const id = Number(b.dataset.id);
+      if (b.dataset.act === "cancel") {
+        const ok = await confirmDialog({ title: "Cancel appointment #" + id + "?", message: "The slot will become available again.", confirmText: "Cancel appointment", danger: true });
+        if (!ok) return;
+        cancelAppointment(id); toast("Appointment cancelled.", "success");
+      } else {
+        const ok = await confirmDialog({ title: "Delete record #" + id + "?", message: "This appointment record will be permanently removed.", confirmText: "Delete record", danger: true });
+        if (!ok) return;
+        DB.appointments = DB.appointments.filter(function (a) { return a.id !== id; });
+        persist(); toast("Record deleted.", "success");
+      }
+      renderAll();
+    }
+  </script>
+</body>
+</html>
