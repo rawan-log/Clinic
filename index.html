@@ -65,25 +65,24 @@
     </div>
   </div>
 
+  <footer class="footer">HakimFlow · Information Systems Analysis and Design</footer>
+
   <script>
     const msg = document.getElementById("authMsg");
     const showErr = (t) => { msg.className = "alert alert-error"; msg.textContent = t; };
     const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
-    // Load & save light/dark mode in localStorage
     if (localStorage.getItem("hf_dark") === "1") document.body.classList.add("dark-mode");
     document.getElementById("themeBtn").onclick = () => {
       const isDark = document.body.classList.toggle("dark-mode");
       localStorage.setItem("hf_dark", isDark ? "1" : "0");
     };
 
-    // Read from localStorage & sessionStorage
     const savedAcc = JSON.parse(localStorage.getItem("hf_account") || "null");
     const activeSess = sessionStorage.getItem("hf_session");
     if (activeSess) storageStatus.textContent = "Session: " + activeSess;
     else if (savedAcc) storageStatus.textContent = "Saved: " + savedAcc.name + " (" + savedAcc.role + ")";
 
-    // Custom JS Login validation
     loginForm.onsubmit = (e) => {
       e.preventDefault();
       if (!emailOk(loginEmail.value)) return showErr("Enter a valid email address.");
@@ -92,7 +91,6 @@
       location.href = "patient-dashboard.html";
     };
 
-    // Custom JS Sign-up validation for Patient / Doctor / Admin buttons
     document.querySelectorAll("#signupForm [data-target]").forEach(btn => {
       btn.onclick = () => {
         if (regName.value.trim().length < 2) return showErr("Enter your full name.");
