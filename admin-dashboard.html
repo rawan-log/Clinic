@@ -28,7 +28,7 @@
     </div>
 
     <div class="card mb">
-      <h2 id="formTitle">Add / Update doctor</h2>
+      <h2>Add / Update doctor</h2>
       <form id="docForm" class="form-row">
         <div><label>Doctor Name</label><input type="text" id="dName" placeholder="Dr. Youssef Adel" required></div>
         <div>
@@ -36,7 +36,7 @@
           <select id="dSpec"><option>Cardiology</option><option>Dermatology</option><option>Pediatrics</option><option>Orthopedics</option></select>
         </div>
         <div><label>Consultation Fee (EGP)</label><input type="number" id="dFee" value="400" required></div>
-        <div style="display:flex;align-items:flex-end"><button type="submit" class="btn btn-primary btn-block">Save doctor</button></div>
+        <div style="display:flex;align-items:flex-end"><button type="submit" class="btn btn-primary btn-block">Add doctor</button></div>
       </form>
     </div>
 
@@ -44,16 +44,10 @@
       <h2>Doctors</h2>
       <div class="table-wrap">
         <table id="docTable">
-          <thead><tr><th>Name</th><th>Specialty</th><th>Fee</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Specialty</th><th>Fee</th><th>Action</th></tr></thead>
           <tbody>
-            <tr>
-              <td class="dn">Dr. Omar El-Masry</td><td class="ds">Cardiology</td><td class="df">450 EGP</td>
-              <td class="actions"><button type="button" class="btn btn-outline btn-sm edit-doc">Edit</button><button type="button" class="btn btn-danger-outline btn-sm del-row">Delete</button></td>
-            </tr>
-            <tr>
-              <td class="dn">Dr. Habiba Tarek</td><td class="ds">Dermatology</td><td class="df">350 EGP</td>
-              <td class="actions"><button type="button" class="btn btn-outline btn-sm edit-doc">Edit</button><button type="button" class="btn btn-danger-outline btn-sm del-row">Delete</button></td>
-            </tr>
+            <tr><td>Dr. Omar El-Masry</td><td>Cardiology</td><td>450 EGP</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
+            <tr><td>Dr. Habiba Tarek</td><td>Dermatology</td><td>350 EGP</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -65,8 +59,8 @@
         <table>
           <thead><tr><th>Name</th><th>Phone</th><th>Action</th></tr></thead>
           <tbody>
-            <tr><td>Sara Ahmed</td><td>0100-555-0192</td><td><button type="button" class="btn btn-danger-outline btn-sm del-row">Delete</button></td></tr>
-            <tr><td>Heba Youssef</td><td>0111-444-5566</td><td><button type="button" class="btn btn-danger-outline btn-sm del-row">Delete</button></td></tr>
+            <tr><td>Sara Ahmed</td><td>0100-555-0192</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
+            <tr><td>Heba Youssef</td><td>0111-444-5566</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -76,8 +70,8 @@
         <table>
           <thead><tr><th>Patient</th><th>Doctor</th><th>Status</th><th>Action</th></tr></thead>
           <tbody>
-            <tr><td>Sara Ahmed</td><td>Dr. Omar El-Masry</td><td>Confirmed</td><td><button type="button" class="btn btn-danger-outline btn-sm del-row">Delete</button></td></tr>
-            <tr><td>Heba Youssef</td><td>Dr. Habiba Tarek</td><td>Confirmed</td><td><button type="button" class="btn btn-danger-outline btn-sm del-row">Delete</button></td></tr>
+            <tr><td>Sara Ahmed</td><td>Dr. Omar El-Masry</td><td>Confirmed</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
+            <tr><td>Heba Youssef</td><td>Dr. Habiba Tarek</td><td>Confirmed</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
           </tbody>
         </table>
       </div>
@@ -85,34 +79,13 @@
   </main>
   <footer class="footer">MediCare Clinic · Information Systems Analysis and Design</footer>
   <script>
-    let editRow = null;
-    document.getElementById("docForm").onsubmit = (e) => {
+    document.getElementById("docForm").onsubmit = e => {
       e.preventDefault();
-      const name = document.getElementById("dName").value, spec = document.getElementById("dSpec").value, fee = document.getElementById("dFee").value + " EGP";
-      if (editRow) {
-        editRow.querySelector(".dn").textContent = name;
-        editRow.querySelector(".ds").textContent = spec;
-        editRow.querySelector(".df").textContent = fee;
-        editRow = null;
-        document.getElementById("formTitle").textContent = "Add / Update doctor";
-      } else {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="dn">${name}</td><td class="ds">${spec}</td><td class="df">${fee}</td><td class="actions"><button type="button" class="btn btn-outline btn-sm edit-doc">Edit</button><button type="button" class="btn btn-danger-outline btn-sm del-row">Delete</button></td>`;
-        document.querySelector("#docTable tbody").appendChild(tr);
-      }
+      document.querySelector("#docTable tbody").insertAdjacentHTML("beforeend",
+        `<tr><td>${dName.value}</td><td>${dSpec.value}</td><td>${dFee.value} EGP</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>`);
       e.target.reset();
     };
-
-    document.addEventListener("click", (e) => {
-      if (e.target.classList.contains("del-row")) e.target.closest("tr").remove();
-      if (e.target.classList.contains("edit-doc")) {
-        editRow = e.target.closest("tr");
-        document.getElementById("dName").value = editRow.querySelector(".dn").textContent;
-        document.getElementById("dSpec").value = editRow.querySelector(".ds").textContent;
-        document.getElementById("dFee").value = parseInt(editRow.querySelector(".df").textContent);
-        document.getElementById("formTitle").textContent = "Editing: " + editRow.querySelector(".dn").textContent;
-      }
-    });
+    document.addEventListener("click", e => { if (e.target.classList.contains("del")) e.target.closest("tr").remove(); });
   </script>
 </body>
 </html>
