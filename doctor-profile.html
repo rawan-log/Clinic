@@ -4,55 +4,60 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Doctor Profile - MediCare Clinic</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="nav"></div>
-  <main class="container" id="content"></main>
-  <div class="footer">MediCare Clinic · Front-end demo for Information Systems Analysis and Design</div>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a class="brand" href="index.html"><span class="brand-logo">✚</span> MediCare Clinic</a>
+      <nav class="nav-links">
+        <a href="index.html">Login</a>
+        <a href="patient-dashboard.html">Patient Dashboard</a>
+        <a href="doctors.html">Doctors</a>
+        <a href="doctor-profile.html" class="active">Doctor Profile</a>
+        <a href="booking.html">Book Appointment</a>
+        <a href="my-appointments.html">My Appointments</a>
+        <a href="doctor-dashboard.html">Doctor Dashboard</a>
+        <a href="admin-dashboard.html">Admin Dashboard</a>
+      </nav>
+    </div>
+  </header>
+  <main class="container">
+    <p><a href="doctors.html">← Back to doctors</a></p>
+    <div class="two-col">
+      <section class="card">
+        <div class="row mb">
+          <div class="avatar">OM</div>
+          <div><h1>Dr. Omar El-Masry</h1><span class="badge badge-role">Cardiology</span></div>
+        </div>
+        <p class="muted">Senior Consultant Cardiologist with 14 years of experience in preventive cardiology and echocardiography.</p>
+        <div class="grid grid-3 mt mb">
+          <div class="stat"><span class="label">Fee</span><strong>450 EGP</strong></div>
+          <div class="stat"><span class="label">Working Days</span><strong>Sat – Thu</strong></div>
+          <div class="stat"><span class="label">Hours</span><strong>09:00 AM – 03:00 PM</strong></div>
+        </div>
 
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
-  <script>
-    const session = requireRole("patient");
-    if (session) { renderNav("doctors"); render(); }
+        <h3>Available Appointment Slots (Nov 28, 2026)</h3>
+        <div class="table-wrap mt">
+          <table>
+            <thead><tr><th>Time Slot</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr><td>09:30 AM</td><td><span class="badge badge-danger">Booked</span></td><td class="muted">Unavailable</td></tr>
+              <tr><td>10:00 AM</td><td><span class="badge badge-danger">Booked</span></td><td class="muted">Unavailable</td></tr>
+              <tr><td>10:30 AM</td><td><span class="badge badge-success">Available</span></td><td><a class="btn btn-primary btn-sm" href="booking.html">Book slot</a></td></tr>
+              <tr><td>11:00 AM</td><td><span class="badge badge-success">Available</span></td><td><a class="btn btn-primary btn-sm" href="booking.html">Book slot</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-    function render() {
-      const d = getDoctor(qs("id"));
-      const box = document.getElementById("content");
-      if (!d) {
-        box.innerHTML = '<div class="card empty"><span class="big">🤷</span>Doctor not found.<br><a class="btn btn-primary mt" href="doctors.html">Back to doctors</a></div>';
-        return;
-      }
-      const week = [];
-      for (let i = 0; i < 7; i++) {
-        const date = isoDate(i);
-        week.push({ date: date, works: doctorWorksOn(d, date), free: freeSlotCount(d, date) });
-      }
-      box.innerHTML =
-        '<p><a href="doctors.html">← Back to doctors</a></p>' +
-        '<div class="two-col">' +
-        '<section class="card"><div class="row" style="gap:1.2rem;align-items:center">' + avatarHTML(d, true) +
-        '<div><h1>' + esc(d.name) + '</h1><span class="badge badge-role">' + esc(d.specialty) + "</span>" +
-        '<p class="muted mt" style="margin-bottom:0">' + d.experience + " years of experience</p></div></div>" +
-        '<h3 class="mt">About</h3><p>' + esc(d.bio) + "</p>" +
-        '<div class="grid grid-3 mt">' +
-        '<div class="stat"><span class="label">Consultation fee</span><strong>' + d.fee + " EGP</strong></div>" +
-        '<div class="stat"><span class="label">Working days</span><strong>' + daysLabel(d) + "</strong></div>" +
-        '<div class="stat"><span class="label">Working hours</span><strong>' + fmtTime(d.from) + " – " + fmtTime(d.to) + "</strong></div></div>" +
-        '<h3 class="mt">Availability this week</h3>' +
-        '<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))">' +
-        week.map(function (w) {
-          const dt = parseISO(w.date);
-          return '<div class="card" style="padding:.7rem;text-align:center;box-shadow:none"><strong>' + DAY_NAMES[dt.getDay()] + " " + dt.getDate() + "</strong><br>" +
-            (!w.works ? '<span class="muted small">Off</span>' : w.free ? '<span class="badge badge-success">' + w.free + " free</span>" : '<span class="badge badge-danger">Full</span>') + "</div>";
-        }).join("") + "</div></section>" +
-        '<aside class="card sticky"><h3>Book an appointment</h3>' +
-        '<p class="muted">Pick a date and time that works for you with ' + esc(d.name) + ".</p>" +
-        '<a class="btn btn-primary btn-block" href="booking.html?doctor=' + d.id + '">Book now</a>' +
-        '<a class="btn btn-ghost btn-block mt" href="doctors.html?specialty=' + encodeURIComponent(d.specialty) + '">More ' + esc(d.specialty) + " doctors</a></aside>" +
-        "</div>";
-    }
-  </script>
+      <aside class="card">
+        <h3>Book with Dr. Omar</h3>
+        <p class="muted small">Choose a date and free time slot on the booking page.</p>
+        <a class="btn btn-primary btn-block" href="booking.html">Book now</a>
+      </aside>
+    </div>
+  </main>
+  <footer class="footer">MediCare Clinic · Information Systems Analysis and Design</footer>
 </body>
 </html>
