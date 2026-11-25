@@ -3,56 +3,112 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login &amp; Register - MediCare Clinic</title>
+  <title>Login &amp; Sign Up - HakimFlow</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="auth-wrap">
-    <section class="auth-hero">
-      <div class="brand brand-hero"><span class="brand-logo brand-logo-hero">✚</span> MediCare Clinic</div>
-      <h1>Book your doctor appointment in a few clicks.</h1>
-      <p>Browse doctors by specialty, check available slots, and manage your visits.</p>
-      <ul>
-        <li>✓ Patient registration &amp; role-based login</li>
-        <li>✓ Real-time conflict check before booking</li>
-        <li>✓ Reschedule or cancel anytime</li>
-      </ul>
-    </section>
+  <div class="auth-center-wrap">
+    <a class="brand auth-brand-top" href="index.html">
+      <span class="brand-logo">✚</span> HakimFlow
+    </a>
 
-    <section class="auth-panel">
-      <div class="card auth-card">
-        <h2>Sign in</h2>
-        <p class="muted small">Select a role to preview its dashboard:</p>
-        <form action="patient-dashboard.html">
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" value="patient@clinic.com" required>
-          </div>
-          <div class="form-group">
-            <label for="pass">Password</label>
-            <input type="password" id="pass" value="123456" required>
-          </div>
-          <div class="row mb">
-            <button type="submit" class="btn btn-primary">Login as Patient</button>
-            <a class="btn btn-outline" href="doctor-dashboard.html">Doctor</a>
-            <a class="btn btn-outline" href="admin-dashboard.html">Admin</a>
-          </div>
-        </form>
-
-        <hr class="auth-divider">
-
-        <details>
-          <summary class="auth-summary">New patient? Create an account</summary>
-          <form action="patient-dashboard.html" class="mt">
-            <div class="form-group"><label>Full name</label><input type="text" placeholder="Sara Ahmed" required></div>
-            <div class="form-group"><label>Email</label><input type="email" placeholder="sara@email.com" required></div>
-            <div class="form-group"><label>Phone</label><input type="tel" placeholder="01001234567" required></div>
-            <div class="form-group"><label>Password</label><input type="password" minlength="6" placeholder="Min 6 characters" required></div>
-            <button type="submit" class="btn btn-primary btn-block">Register</button>
-          </form>
-        </details>
+    <div class="card auth-card">
+      <div class="row mb">
+        <button type="button" class="btn btn-outline btn-sm" id="themeBtn">Switch Theme</button>
+        <span class="muted small" id="themeLabel">Theme: Rose Classic</span>
       </div>
-    </section>
+
+      <div id="authMsg" class="alert hidden"></div>
+
+      <form id="loginForm" novalidate>
+        <h2>Login</h2>
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" placeholder="name@example.com">
+        </div>
+        <div class="form-group">
+          <label for="loginPass">Password</label>
+          <input type="password" id="loginPass" placeholder="At least 6 characters">
+        </div>
+        <div class="row mb">
+          <button type="submit" class="btn btn-primary">Login</button>
+          <a class="btn btn-outline" href="doctor-dashboard.html">Doctor</a>
+          <a class="btn btn-outline" href="admin-dashboard.html">Admin</a>
+        </div>
+      </form>
+
+      <hr class="auth-divider">
+
+      <details id="signupBox">
+        <summary class="auth-summary">Sign up for a patient account</summary>
+        <form id="signupForm" class="mt" novalidate>
+          <div class="form-group">
+            <label for="regName">Full name</label>
+            <input type="text" id="regName" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label for="regEmail">Email</label>
+            <input type="email" id="regEmail" placeholder="Email address">
+          </div>
+          <div class="form-group">
+            <label for="regPhone">Phone</label>
+            <input type="tel" id="regPhone" placeholder="Phone number">
+          </div>
+          <div class="form-group">
+            <label for="regPass">Password</label>
+            <input type="password" id="regPass" placeholder="At least 6 characters">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Create account</button>
+        </form>
+      </details>
+
+      <p class="storage-note" id="storageStatus">Session: Not signed in yet</p>
+    </div>
   </div>
+
+  <script>
+    const msg = document.getElementById("authMsg");
+    const showMsg = (text, ok) => { msg.className = ok ? "alert alert-success" : "alert alert-error"; msg.textContent = text; };
+
+    // Theme load & toggle save (localStorage)
+    const applyTheme = (mode) => {
+      document.body.classList.toggle("theme-editorial", mode === "editorial");
+      document.getElementById("themeLabel").textContent = "Theme: " + (mode === "editorial" ? "Crimson Editorial" : "Rose Classic");
+    };
+    const savedTheme = localStorage.getItem("hakimflow_theme") || "classic";
+    applyTheme(savedTheme);
+    document.getElementById("themeBtn").onclick = () => {
+      const next = document.body.classList.contains("theme-editorial") ? "classic" : "editorial";
+      localStorage.setItem("hakimflow_theme", next);
+      applyTheme(next);
+    };
+
+    // Read session user (sessionStorage) & registered patient (localStorage)
+    const activeUser = sessionStorage.getItem("hakimflow_session");
+    const savedReg = JSON.parse(localStorage.getItem("hakimflow_patient") || "null");
+    if (activeUser) document.getElementById("storageStatus").textContent = "Active session (sessionStorage): " + activeUser;
+    else if (savedReg) document.getElementById("storageStatus").textContent = "Saved account (localStorage): " + savedReg.email;
+
+    // Custom JS validation (no HTML5 required)
+    const validEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+    loginForm.onsubmit = (e) => {
+      e.preventDefault();
+      if (!validEmail(loginEmail.value)) return showMsg("Enter a valid email address.", false);
+      if (loginPass.value.length < 6) return showMsg("Password must be at least 6 characters.", false);
+      sessionStorage.setItem("hakimflow_session", loginEmail.value.trim());
+      location.href = "patient-dashboard.html";
+    };
+    signupForm.onsubmit = (e) => {
+      e.preventDefault();
+      if (regName.value.trim().length < 2) return showMsg("Enter your full name.", false);
+      if (!validEmail(regEmail.value)) return showMsg("Enter a valid email address.", false);
+      if (regPhone.value.trim().length < 7) return showMsg("Enter a valid phone number.", false);
+      if (regPass.value.length < 6) return showMsg("Password must be at least 6 characters.", false);
+      const user = { name: regName.value.trim(), email: regEmail.value.trim() };
+      localStorage.setItem("hakimflow_patient", JSON.stringify(user));
+      sessionStorage.setItem("hakimflow_session", user.email);
+      location.href = "patient-dashboard.html";
+    };
+  </script>
 </body>
 </html>
