@@ -14,7 +14,7 @@
 
     <div class="card auth-card">
       <div class="row mb">
-        <button type="button" class="btn btn-outline btn-sm" id="themeBtn">Light / Dark</button>
+        <button type="button" class="btn btn-outline btn-sm" data-theme-toggle>Light / Dark</button>
       </div>
 
       <div id="authMsg" class="alert hidden"></div>
@@ -68,15 +68,17 @@
   <footer class="footer">HakimFlow · Information Systems Analysis and Design</footer>
 
   <script>
+    if (localStorage.getItem("hf_dark") === "1") document.body.classList.add("dark-mode");
+    document.querySelectorAll("[data-theme-toggle]").forEach(btn => {
+      btn.onclick = () => {
+        const dark = document.body.classList.toggle("dark-mode");
+        localStorage.setItem("hf_dark", dark ? "1" : "0");
+      };
+    });
+
     const msg = document.getElementById("authMsg");
     const showErr = (t) => { msg.className = "alert alert-error"; msg.textContent = t; };
     const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-
-    if (localStorage.getItem("hf_dark") === "1") document.body.classList.add("dark-mode");
-    document.getElementById("themeBtn").onclick = () => {
-      const isDark = document.body.classList.toggle("dark-mode");
-      localStorage.setItem("hf_dark", isDark ? "1" : "0");
-    };
 
     const savedAcc = JSON.parse(localStorage.getItem("hf_account") || "null");
     const activeSess = sessionStorage.getItem("hf_session");
