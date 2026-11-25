@@ -256,6 +256,38 @@ td { padding: 0.68rem 0.6rem; border-bottom: 1px solid var(--border); }
   font-size: 0.82rem;
 }
 
+/* Pop-up Modal for Doctor & Admin Dashboards */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 7, 10, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 50;
+}
+.modal-box {
+  width: 100%;
+  max-width: 820px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.4rem;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--border);
+}
 /* Fixed Footer at Bottom */
 .footer {
   width: 100%;
