@@ -4,112 +4,45 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Doctor Dashboard - MediCare Clinic</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="nav"></div>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a class="brand" href="index.html"><span class="brand-logo">✚</span> MediCare Clinic</a>
+      <nav class="nav-links">
+        <a href="index.html">Login</a>
+        <a href="patient-dashboard.html">Patient Dashboard</a>
+        <a href="doctors.html">Doctors</a>
+        <a href="doctor-profile.html">Doctor Profile</a>
+        <a href="booking.html">Book Appointment</a>
+        <a href="my-appointments.html">My Appointments</a>
+        <a href="doctor-dashboard.html" class="active">Doctor Dashboard</a>
+        <a href="admin-dashboard.html">Admin Dashboard</a>
+      </nav>
+    </div>
+  </header>
   <main class="container">
     <div class="page-head">
-      <div>
-        <h1 id="title">My schedule</h1>
-        <p id="subtitle"></p>
-      </div>
-      <div class="row">
-        <button class="btn btn-outline btn-sm" id="prevDay">← Previous day</button>
-        <button class="btn btn-outline btn-sm" id="todayBtn">Today</button>
-        <button class="btn btn-outline btn-sm" id="nextDay">Next day →</button>
-        <input type="date" id="datePick" style="width:auto">
-      </div>
+      <div><h1>Daily appointment schedule</h1><p class="muted">Dr. Omar El-Masry · Cardiology · Nov 28, 2026</p></div>
+      <input type="date" value="2026-11-28" style="width:auto">
     </div>
 
-    <div class="grid grid-3 mb">
-      <div class="card stat"><span class="num" id="statDay">0</span><span class="label" id="statDayLabel">Appointments on selected day</span></div>
-      <div class="card stat"><span class="num" id="statWeek">0</span><span class="label">Appointments in the next 7 days</span></div>
-      <div class="card stat"><span class="num" id="statFree">0</span><span class="label">Free slots on selected day</span></div>
-    </div>
-
-    <div class="two-col">
-      <section class="card">
-        <div class="card-title"><h2 id="listTitle">Appointments</h2></div>
-        <div id="dayList"></div>
-      </section>
-      <aside class="card">
-        <h3>Next 7 days</h3>
-        <p class="muted small">Click a day to open its schedule.</p>
-        <div id="weekList"></div>
-      </aside>
+    <div class="card">
+      <h2>Today's Schedule</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Patient</th><th>Phone</th><th>Reason</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td><strong>09:30 AM</strong></td><td>Mahmoud Nabil</td><td>0100-111-2233</td><td>Routine ECG check</td><td><span class="badge badge-role">Completed</span></td></tr>
+            <tr><td><strong>10:00 AM</strong></td><td>Heba Youssef</td><td>0111-444-5566</td><td>Post-procedure follow-up</td><td><span class="badge badge-success">Confirmed</span></td></tr>
+            <tr><td><strong>10:30 AM</strong></td><td>Sara Ahmed</td><td>0100-555-0192</td><td>Chest palpitations</td><td><span class="badge badge-success">Confirmed</span></td></tr>
+            <tr><td><strong>11:00 AM</strong></td><td colspan="3" class="muted">Open time slot</td><td><span class="badge badge-warn">Available</span></td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
-  <div class="footer">MediCare Clinic · Front-end demo for Information Systems Analysis and Design</div>
-
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
-  <script>
-    const session = requireRole("doctor");
-    let current = todayISO();
-
-    function shift(days) {
-      const d = parseISO(current); d.setDate(d.getDate() + days);
-      current = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-      render();
-    }
-
-    if (session) {
-      renderNav("dashboard");
-      document.getElementById("prevDay").addEventListener("click", function () { shift(-1); });
-      document.getElementById("nextDay").addEventListener("click", function () { shift(1); });
-      document.getElementById("todayBtn").addEventListener("click", function () { current = todayISO(); render(); });
-      document.getElementById("datePick").addEventListener("change", function () { if (this.value) { current = this.value; render(); } });
-      render();
-    }
-
-    function myAppts() { return DB.appointments.filter(function (a) { return a.doctorId === session.id; }); }
-
-    function render() {
-      const me = getDoctor(session.id);
-      document.getElementById("subtitle").textContent = me.name + " · " + me.specialty + " · " + fmtDate(current);
-      document.getElementById("datePick").value = current;
-      const isToday = current === todayISO();
-      document.getElementById("listTitle").textContent = isToday ? "Today's appointments" : "Appointments on " + fmtDate(current);
-      document.getElementById("statDayLabel").textContent = isToday ? "Appointments today" : "Appointments on selected day";
-
-      const mine = myAppts();
-      const dayAppts = mine.filter(function (a) { return a.date === current && a.status !== "Cancelled"; }).sort(byDateTime);
-
-      document.getElementById("statDay").textContent = dayAppts.length;
-      document.getElementById("statFree").textContent = freeSlotCount(me, current);
-      let weekCount = 0;
-      for (let i = 0; i < 7; i++) {
-        weekCount += mine.filter(function (a) { return a.date === isoDate(i) && a.status !== "Cancelled"; }).length;
-      }
-      document.getElementById("statWeek").textContent = weekCount;
-
-      const list = document.getElementById("dayList");
-      if (!doctorWorksOn(me, current) && !dayAppts.length) {
-        list.innerHTML = '<div class="empty"><span class="big">🌴</span>You are not scheduled to work on this day.</div>';
-      } else if (!dayAppts.length) {
-        list.innerHTML = '<div class="empty"><span class="big">✅</span>No appointments booked for this day.</div>';
-      } else {
-        list.innerHTML = '<ul class="timeline">' + dayAppts.map(function (a) {
-          const p = getPatient(a.patientId);
-          return '<li><span class="time">' + fmtTime(a.time) + '</span><div class="who"><strong>' + esc(p ? p.name : "Removed patient") + "</strong>" +
-            "<small>" + (a.reason ? esc(a.reason) : "No reason provided") + (p ? " · " + esc(p.phone) : "") + "</small></div>" + statusBadge(statusOf(a)) + "</li>";
-        }).join("") + "</ul>";
-      }
-
-      let week = "";
-      for (let i = 0; i < 7; i++) {
-        const iso = isoDate(i), dt = parseISO(iso);
-        const n = mine.filter(function (a) { return a.date === iso && a.status !== "Cancelled"; }).length;
-        week += '<button class="mini-day' + (iso === current ? " active" : "") + '" data-d="' + iso + '"><span>' + DAY_NAMES[dt.getDay()] + " " + dt.getDate() + " " + MONTH_NAMES[dt.getMonth()] + "</span><strong>" +
-          (doctorWorksOn(me, iso) || n ? n + (n === 1 ? " appt" : " appts") : "Off") + "</strong></button>";
-      }
-      const wl = document.getElementById("weekList");
-      wl.innerHTML = week;
-      wl.querySelectorAll("[data-d]").forEach(function (b) {
-        b.addEventListener("click", function () { current = b.dataset.d; render(); });
-      });
-    }
-  </script>
+  <footer class="footer">MediCare Clinic · Information Systems Analysis and Design</footer>
 </body>
 </html>
