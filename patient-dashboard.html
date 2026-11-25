@@ -4,92 +4,79 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Patient Dashboard - MediCare Clinic</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="nav"></div>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a class="brand" href="index.html"><span class="brand-logo">✚</span> MediCare Clinic</a>
+      <nav class="nav-links">
+        <a href="index.html">Login</a>
+        <a href="patient-dashboard.html" class="active">Patient Dashboard</a>
+        <a href="doctors.html">Doctors</a>
+        <a href="doctor-profile.html">Doctor Profile</a>
+        <a href="booking.html">Book Appointment</a>
+        <a href="my-appointments.html">My Appointments</a>
+        <a href="doctor-dashboard.html">Doctor Dashboard</a>
+        <a href="admin-dashboard.html">Admin Dashboard</a>
+      </nav>
+    </div>
+  </header>
   <main class="container">
     <div class="page-head">
       <div>
-        <h1 id="greeting">Welcome</h1>
-        <p>Here is a quick look at your appointments.</p>
+        <h1>Welcome back, Sara</h1>
+        <p class="muted">Manage your upcoming visits and book new appointments.</p>
       </div>
       <a class="btn btn-primary" href="doctors.html">+ Book new appointment</a>
     </div>
 
     <div class="grid grid-3 mb">
-      <div class="card stat"><span class="num" id="statUpcoming">0</span><span class="label">Upcoming appointments</span></div>
-      <div class="card stat"><span class="num" id="statCompleted">0</span><span class="label">Completed visits</span></div>
-      <div class="card stat"><span class="num" id="statCancelled">0</span><span class="label">Cancelled</span></div>
+      <div class="card stat"><span class="num">2</span><span class="label">Upcoming appointments</span></div>
+      <div class="card stat"><span class="num">4</span><span class="label">Completed visits</span></div>
+      <div class="card stat"><span class="num">4</span><span class="label">Available specialties</span></div>
     </div>
 
     <div class="two-col">
       <section class="card">
-        <div class="card-title">
-          <h2>Upcoming appointments</h2>
-          <a href="my-appointments.html" class="small">View all</a>
+        <div class="page-head"><h2>Upcoming appointments</h2><a href="my-appointments.html" class="small">View all</a></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Doctor</th><th>Date</th><th>Time</th><th>Actions</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><strong>Dr. Omar El-Masry</strong><br><span class="muted small">Cardiology</span></td>
+                <td>Nov 28, 2026</td><td>10:30 AM</td>
+                <td class="actions">
+                  <a class="btn btn-outline btn-sm" href="booking.html">Reschedule</a>
+                  <a class="btn btn-danger-outline btn-sm" href="my-appointments.html">Cancel</a>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Dr. Habiba Tarek</strong><br><span class="muted small">Dermatology</span></td>
+                <td>Dec 02, 2026</td><td>01:00 PM</td>
+                <td class="actions">
+                  <a class="btn btn-outline btn-sm" href="booking.html">Reschedule</a>
+                  <a class="btn btn-danger-outline btn-sm" href="my-appointments.html">Cancel</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div id="upcomingList"></div>
       </section>
 
-      <aside class="grid">
-        <section class="card" id="nextCard"></section>
-        <section class="card">
-          <h3>Find a doctor by specialty</h3>
-          <div class="chips mt" id="specChips"></div>
-        </section>
+      <aside class="card">
+        <h3>Browse by specialty</h3>
+        <p class="muted small">Jump straight to doctors in a department:</p>
+        <div class="row mt">
+          <a class="btn btn-outline btn-sm" href="doctors.html">Cardiology</a>
+          <a class="btn btn-outline btn-sm" href="doctors.html">Dermatology</a>
+          <a class="btn btn-outline btn-sm" href="doctors.html">Pediatrics</a>
+          <a class="btn btn-outline btn-sm" href="doctors.html">Orthopedics</a>
+        </div>
       </aside>
     </div>
   </main>
-  <div class="footer">MediCare Clinic · Front-end demo for Information Systems Analysis and Design</div>
-
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
-  <script>
-    const session = requireRole("patient");
-    if (session) { renderNav("dashboard"); render(); wireCancel(document.getElementById("upcomingList"), render); }
-
-    function render() {
-      const me = getPatient(session.id);
-      document.getElementById("greeting").textContent = "Welcome back, " + me.name.split(" ")[0] + " 👋";
-
-      const mine = DB.appointments.filter(function (a) { return a.patientId === me.id; });
-      const upcoming = mine.filter(function (a) { return statusOf(a) === "Confirmed"; }).sort(byDateTime);
-      document.getElementById("statUpcoming").textContent = upcoming.length;
-      document.getElementById("statCompleted").textContent = mine.filter(function (a) { return statusOf(a) === "Completed"; }).length;
-      document.getElementById("statCancelled").textContent = mine.filter(function (a) { return statusOf(a) === "Cancelled"; }).length;
-
-      // Upcoming list
-      const list = document.getElementById("upcomingList");
-      if (!upcoming.length) {
-        list.innerHTML = '<div class="empty"><span class="big">📅</span>You have no upcoming appointments.<br><a class="btn btn-primary mt" href="doctors.html">Find a doctor</a></div>';
-      } else {
-        list.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Doctor</th><th>Date</th><th>Time</th><th>Actions</th></tr></thead><tbody>' +
-          upcoming.slice(0, 5).map(function (a) {
-            const d = getDoctor(a.doctorId);
-            return "<tr><td><strong>" + esc(d.name) + '</strong><br><span class="muted small">' + esc(d.specialty) + "</span></td>" +
-              "<td>" + fmtDate(a.date) + "</td><td>" + fmtTime(a.time) + '</td><td class="actions">' + apptActionsHTML(a) + "</td></tr>";
-          }).join("") + "</tbody></table></div>";
-      }
-
-      // Next appointment highlight
-      const next = document.getElementById("nextCard");
-      if (upcoming.length) {
-        const a = upcoming[0], d = getDoctor(a.doctorId);
-        next.innerHTML = "<h3>Your next appointment</h3>" +
-          '<div class="row mt">' + avatarHTML(d) + "<div><strong>" + esc(d.name) + '</strong><br><span class="muted small">' + esc(d.specialty) + "</span></div></div>" +
-          '<p class="mt mb"><strong>' + fmtDate(a.date) + "</strong> at <strong>" + fmtTime(a.time) + "</strong>" +
-          (a.reason ? '<br><span class="muted small">Reason: ' + esc(a.reason) + "</span>" : "") + "</p>" +
-          '<a class="btn btn-outline btn-block" href="doctor-profile.html?id=' + d.id + '">View doctor profile</a>';
-      } else {
-        next.innerHTML = '<h3>Your next appointment</h3><p class="muted mt">Nothing scheduled yet.</p>';
-      }
-
-      // Specialty chips
-      document.getElementById("specChips").innerHTML = SPECIALTIES.map(function (s) {
-        return '<a class="chip" href="doctors.html?specialty=' + encodeURIComponent(s.name) + '">' + s.icon + " " + s.name + "</a>";
-      }).join("");
-    }
-  </script>
+  <footer class="footer">MediCare Clinic · Information Systems Analysis and Design</footer>
 </body>
 </html>
