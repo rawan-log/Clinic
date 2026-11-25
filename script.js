@@ -20,8 +20,9 @@ if (byId('loginForm')) {
     if (!emailOk(byId('loginEmail').value)) return showErr('Enter a valid email address.');
     if (byId('loginPass').value.length < 6) return showErr('Password must be at least 6 characters.');
     const email = byId('loginEmail').value.trim();
-    sessionStorage.setItem('hf_session', email);
-    location.href = dashboard(savedAcc && savedAcc.email === email ? savedAcc.role : 'Patient');
+    const role = byId('loginRole').value;
+    sessionStorage.setItem('hf_session', email + ' (' + role + ')');
+    location.href = dashboard(role);
   };
   byId('signupForm').onsubmit = e => e.preventDefault();
   document.querySelectorAll('#signupForm [data-role]').forEach(btn => {
