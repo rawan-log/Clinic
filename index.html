@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Login &amp; Sign Up - HakimFlow</title><link rel="stylesheet" href="style.css"><script src="script.js" defer></script></head>
+<body>
+<header class="navbar"><div class="navbar-inner"><a class="brand" href="index.html"><span class="brand-logo">✚</span> HakimFlow</a><nav class="nav-links"><a href="index.html" class="active" aria-current="page">Login</a><button type="button" class="btn btn-outline btn-sm" data-theme-toggle>Light / Dark</button></nav></div></header>
+<main class="container">
+<div class="auth-center-wrap"><div class="card auth-card"><div id="authMsg" class="alert hidden" role="alert"></div><form id="loginForm" novalidate><h2>Login</h2><div class="form-group"><label for="loginEmail">Email</label><input id="loginEmail" type="email" placeholder=""></div><div class="form-group"><label for="loginPass">Password</label><input id="loginPass" type="password" placeholder=""></div><button class="btn btn-primary btn-block">Login</button></form><hr class="auth-divider"><details open><summary class="auth-summary">Sign up</summary><form id="signupForm" class="mt" novalidate><div class="form-group"><label for="regName">Full name</label><input id="regName" type="text" placeholder=""></div><div class="form-group"><label for="regEmail">Email</label><input id="regEmail" type="email" placeholder=""></div><div class="form-group"><label for="regPhone">Phone</label><input id="regPhone" type="tel" placeholder=""></div><div class="form-group"><label for="regPass">Password</label><input id="regPass" type="password" placeholder="At least 6 characters"></div><div class="row"><button type="button" class="btn btn-primary btn-sm" data-role="Patient">Sign up as Patient</button><button type="button" class="btn btn-outline btn-sm" data-role="Doctor">Sign up as Doctor</button><button type="button" class="btn btn-outline btn-sm" data-role="Admin">Sign up as Admin</button></div></form></details><p class="storage-note" id="storageStatus">No saved user or session yet.</p></div></div>
+</main>
+<footer class="footer">HakimFlow · Information Systems Analysis and Design</footer>
+</body>
+</html>
