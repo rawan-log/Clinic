@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Book Appointment - MediCare Clinic</title>
+  <title>Book Appointment - HakimFlow</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="navbar">
     <div class="navbar-inner">
-      <a class="brand" href="index.html"><span class="brand-logo">✚</span> MediCare Clinic</a>
+      <a class="brand" href="index.html"><span class="brand-logo">✚</span> HakimFlow</a>
       <nav class="nav-links">
         <a href="index.html">Login</a>
         <a href="patient-dashboard.html">Patient Dashboard</a>
@@ -24,16 +24,17 @@
   </header>
   <main class="container">
     <div class="page-head">
-      <div><h1>Book / Reschedule Appointment</h1><p class="muted">Select a doctor, date, and available time slot.</p></div>
+      <div><h1>Book an appointment</h1><p class="muted">Select a doctor, date, and open time slot.</p></div>
     </div>
 
     <div id="msgBox" class="alert hidden"></div>
 
-    <div class="two-col">
+    <form id="bookForm" class="two-col" novalidate>
       <section class="card">
         <div class="form-group">
-          <label for="doc">1. Choose Doctor</label>
+          <label for="doc">1. Doctor</label>
           <select id="doc">
+            <option value="">Select a doctor</option>
             <option>Dr. Omar El-Masry — Cardiology (450 EGP)</option>
             <option>Dr. Habiba Tarek — Dermatology (350 EGP)</option>
             <option>Dr. Tarek Kamel — Pediatrics (300 EGP)</option>
@@ -42,12 +43,12 @@
         </div>
 
         <div class="form-group">
-          <label for="date">2. Choose Date</label>
-          <input type="date" id="date" value="2026-11-28">
+          <label for="date">2. Date</label>
+          <input type="date" id="date">
         </div>
 
         <div class="form-group">
-          <label>3. Choose Time Slot <span class="muted small">(Click 10:00 AM to test conflict check)</span></label>
+          <label>3. Time slot <span class="muted small">(10:00 AM is booked)</span></label>
           <div class="slots">
             <button type="button" class="slot booked" data-booked="1">10:00 AM</button>
             <button type="button" class="slot">10:30 AM</button>
@@ -57,32 +58,45 @@
         </div>
 
         <div class="form-group">
-          <label for="reason">4. Reason for visit (optional)</label>
-          <textarea id="reason" rows="2" placeholder="Briefly describe symptoms..."></textarea>
+          <label for="reason">4. Reason for visit</label>
+          <textarea id="reason" rows="2" placeholder="Briefly describe your visit reason"></textarea>
         </div>
       </section>
 
       <aside class="card">
-        <h3>Booking Action</h3>
-        <p class="muted small">Confirm your selected slot or go to your appointments list.</p>
-        <button type="button" class="btn btn-primary btn-block mt" id="confirmBtn">Confirm appointment</button>
+        <h3>Confirm booking</h3>
+        <p class="storage-note" id="lastBookingInfo">No saved booking yet.</p>
+        <button type="submit" class="btn btn-primary btn-block mt">Confirm appointment</button>
         <a class="btn btn-outline btn-block mt" href="my-appointments.html">My appointments</a>
       </aside>
-    </div>
+    </form>
   </main>
-  <footer class="footer">MediCare Clinic · Information Systems Analysis and Design</footer>
+  <footer class="footer">HakimFlow · Information Systems Analysis and Design</footer>
   <script>
-    let chosen = "";
-    const msg = document.getElementById("msgBox");
+    if (localStorage.getItem("hakimflow_theme") === "editorial") document.body.classList.add("theme-editorial");
+    const last = sessionStorage.getItem("hakimflow_last_booking") || localStorage.getItem("hakimflow_last_booking");
+    if (last) lastBookingInfo.textContent = "Last booking: " + last;
+
+    let slot = "";
     document.querySelectorAll(".slot").forEach(b => b.onclick = () => {
-      if (b.dataset.booked) { msg.className = "alert alert-error"; msg.textContent = "Conflict: 10:00 AM is already booked."; return; }
-      msg.className = "alert hidden";
+      if (b.dataset.booked) { msgBox.className = "alert alert-error"; msgBox.textContent = "10:00 AM is already booked."; return; }
+      msgBox.className = "alert hidden";
       document.querySelectorAll(".slot").forEach(s => s.classList.remove("selected"));
-      b.classList.add("selected"); chosen = b.textContent;
+      b.classList.add("selected"); slot = b.textContent;
     });
-    document.getElementById("confirmBtn").onclick = () => {
-      msg.className = chosen ? "alert alert-success" : "alert alert-error";
-      msg.textContent = chosen ? "✓ Appointment confirmed for " + chosen + "!" : "Please pick an available time slot first.";
+
+    bookForm.onsubmit = (e) => {
+      e.preventDefault();
+      if (!doc.value) { msgBox.className = "alert alert-error"; msgBox.textContent = "Please choose a doctor."; return; }
+      if (!date.value) { msgBox.className = "alert alert-error"; msgBox.textContent = "Please choose a date."; return; }
+      if (!slot) { msgBox.className = "alert alert-error"; msgBox.textContent = "Please choose an available time slot."; return; }
+      const summary = doc.value.split("—")[0].trim() + " on " + date.value + " at " + slot;
+      localStorage.setItem("hakimflow_last_booking", summary);
+      sessionStorage.setItem("hakimflow_last_booking", summary);
+      lastBookingInfo.textContent = "Last booking: " + summary;
+      msgBox.className = "alert alert-success";
+      msgBox.textContent = "✓ Booked: " + summary;
     };
   </script>
 </body>
+</html>
