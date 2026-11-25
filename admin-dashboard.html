@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Dashboard - MediCare Clinic</title>
+  <title>Admin Dashboard - HakimFlow</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="navbar">
     <div class="navbar-inner">
-      <a class="brand" href="index.html"><span class="brand-logo">✚</span> MediCare Clinic</a>
+      <a class="brand" href="index.html"><span class="brand-logo">✚</span> HakimFlow</a>
       <nav class="nav-links">
         <a href="index.html">Login</a>
         <a href="patient-dashboard.html">Patient Dashboard</a>
@@ -29,28 +29,37 @@
 
     <div class="card mb">
       <h2>Add / Update doctor</h2>
-      <form id="docForm" class="form-row">
-        <div><label>Doctor Name</label><input type="text" id="dName" placeholder="Dr. Youssef Adel" required></div>
+      <form action="#doctors-list" class="form-row">
+        <div><label for="dName">Doctor name</label><input type="text" id="dName" placeholder="Dr. Youssef Adel"></div>
         <div>
-          <label>Specialty</label>
-          <select id="dSpec"><option>Cardiology</option><option>Dermatology</option><option>Pediatrics</option><option>Orthopedics</option></select>
+          <label for="dSpec">Specialty</label>
+          <select id="dSpec">
+            <option>Cardiology</option>
+            <option>Dermatology</option>
+            <option>Pediatrics</option>
+            <option>Orthopedics</option>
+          </select>
         </div>
-        <div><label>Consultation Fee (EGP)</label><input type="number" id="dFee" value="400" required></div>
-        <div style="display:flex;align-items:flex-end"><button type="submit" class="btn btn-primary btn-block">Add doctor</button></div>
+        <div><label for="dFee">Consultation fee (EGP)</label><input type="number" id="dFee" placeholder="400"></div>
+        <div><label for="dSave">Action</label><button type="submit" id="dSave" class="btn btn-primary btn-block">Save doctor</button></div>
       </form>
     </div>
 
-    <div class="card mb">
+    <div class="card mb" id="doctors-list">
       <h2>Doctors</h2>
-      <div class="table-wrap">
-        <table id="docTable">
-          <thead><tr><th>Name</th><th>Specialty</th><th>Fee</th><th>Action</th></tr></thead>
-          <tbody>
-            <tr><td>Dr. Omar El-Masry</td><td>Cardiology</td><td>450 EGP</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
-            <tr><td>Dr. Habiba Tarek</td><td>Dermatology</td><td>350 EGP</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
-          </tbody>
-        </table>
-      </div>
+      <table>
+        <thead><tr><th>Name</th><th>Specialty</th><th>Fee</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Dr. Omar El-Masry</td><td>Cardiology</td><td>450 EGP</td>
+            <td class="actions"><a class="btn btn-outline btn-sm" href="#dName">Edit</a><a class="btn btn-danger-outline btn-sm" href="#doctors-list">Delete</a></td>
+          </tr>
+          <tr>
+            <td>Dr. Habiba Tarek</td><td>Dermatology</td><td>350 EGP</td>
+            <td class="actions"><a class="btn btn-outline btn-sm" href="#dName">Edit</a><a class="btn btn-danger-outline btn-sm" href="#doctors-list">Delete</a></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="grid grid-2">
@@ -59,8 +68,8 @@
         <table>
           <thead><tr><th>Name</th><th>Phone</th><th>Action</th></tr></thead>
           <tbody>
-            <tr><td>Sara Ahmed</td><td>0100-555-0192</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
-            <tr><td>Heba Youssef</td><td>0111-444-5566</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
+            <tr><td>Sara Ahmed</td><td>0100-555-0192</td><td><a class="btn btn-danger-outline btn-sm" href="#doctors-list">Delete</a></td></tr>
+            <tr><td>Heba Youssef</td><td>0111-444-5566</td><td><a class="btn btn-danger-outline btn-sm" href="#doctors-list">Delete</a></td></tr>
           </tbody>
         </table>
       </div>
@@ -70,22 +79,13 @@
         <table>
           <thead><tr><th>Patient</th><th>Doctor</th><th>Status</th><th>Action</th></tr></thead>
           <tbody>
-            <tr><td>Sara Ahmed</td><td>Dr. Omar El-Masry</td><td>Confirmed</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
-            <tr><td>Heba Youssef</td><td>Dr. Habiba Tarek</td><td>Confirmed</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>
+            <tr><td>Sara Ahmed</td><td>Dr. Omar El-Masry</td><td>Confirmed</td><td><a class="btn btn-danger-outline btn-sm" href="#doctors-list">Delete</a></td></tr>
+            <tr><td>Heba Youssef</td><td>Dr. Habiba Tarek</td><td>Confirmed</td><td><a class="btn btn-danger-outline btn-sm" href="#doctors-list">Delete</a></td></tr>
           </tbody>
         </table>
       </div>
     </div>
   </main>
-  <footer class="footer">MediCare Clinic · Information Systems Analysis and Design</footer>
-  <script>
-    document.getElementById("docForm").onsubmit = e => {
-      e.preventDefault();
-      document.querySelector("#docTable tbody").insertAdjacentHTML("beforeend",
-        `<tr><td>${dName.value}</td><td>${dSpec.value}</td><td>${dFee.value} EGP</td><td><button type="button" class="btn btn-danger-outline btn-sm del">Delete</button></td></tr>`);
-      e.target.reset();
-    };
-    document.addEventListener("click", e => { if (e.target.classList.contains("del")) e.target.closest("tr").remove(); });
-  </script>
+  <footer class="footer">HakimFlow · Information Systems Analysis and Design</footer>
 </body>
 </html>
